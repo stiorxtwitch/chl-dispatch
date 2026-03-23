@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHL — Connexion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #0ea5e9;
+      --blue-dark: #0369a1;
+      --blue-glow: rgba(14,165,233,0.35);
+      --bg: #050d1a;
+      --panel: rgba(8, 20, 40, 0.92);
+      --border: rgba(14,165,233,0.25);
+      --text: #e0f2fe;
+      --muted: #64a8cc;
+    }
+
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(14,165,233,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridScroll 20s linear infinite;
+    }
+    @keyframes gridScroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .login-card {
+      position: relative;
+      width: 420px;
+      padding: 48px 40px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 0 60px rgba(14,165,233,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      z-index: 1;
+    }
+
+    /* Corner brackets */
+    .login-card::before, .login-card::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: var(--blue);
+      border-style: solid;
+    }
+    .login-card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .login-card::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .logo-area {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo-cross {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      position: relative;
+    }
+    .logo-cross svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 12px var(--blue));
+    }
+
+    .logo-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: #fff;
+      text-shadow: 0 0 20px var(--blue-glow);
+    }
+    .logo-sub {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .scan-line {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      margin: 24px 0 32px;
+      animation: scanPulse 3s ease-in-out infinite;
+    }
+    @keyframes scanPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; box-shadow: 0 0 8px var(--blue); }
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(14,165,233,0.05);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+    input:focus {
+      border-color: var(--blue);
+      background: rgba(14,165,233,0.1);
+      box-shadow: 0 0 20px rgba(14,165,233,0.15);
+    }
+    input::placeholder { color: rgba(100,168,204,0.4); }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+      border: none;
+      border-radius: 2px;
+      color: white;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transform: translateY(-50%) skewX(-20deg);
+      transition: left 0.4s;
+    }
+    .btn-login:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(14,165,233,0.4); }
+    .btn-login:hover::after { left: 100%; }
+    .btn-login:active { transform: translateY(0); }
+
+    .error-msg {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 2px;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 28px;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #22c55e;
+      animation: blink 2s ease infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo-area">
+      <div class="logo-cross">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="22" y="6" width="20" height="52" rx="3" fill="#0ea5e9" opacity="0.9"/>
+          <rect x="6" y="22" width="52" height="20" rx="3" fill="#0ea5e9" opacity="0.9"/>
+          <rect x="26" y="10" width="12" height="44" rx="1" fill="white" opacity="0.15"/>
+          <rect x="10" y="26" width="44" height="12" rx="1" fill="white" opacity="0.15"/>
+        </svg>
+      </div>
+      <div class="logo-title">CHL</div>
+      <div class="logo-sub">Centre Hospitalier Légrand — Dispatch</div>
+    </div>
+    <div class="scan-line"></div>
+
+    <label>Identifiant</label>
+    <input type="text" id="username" placeholder="Votre nom d'utilisateur" autocomplete="off">
+
+    <label>Mot de passe</label>
+    <input type="password" id="password" placeholder="••••••••">
+
+    <button class="btn-login" onclick="handleLogin()">Connexion</button>
+    <div class="error-msg" id="error-msg">Identifiants invalides. Accès refusé.</div>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      SYSTÈME OPÉRATIONNEL
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://gktawbaposndfxijkxdk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk'
+    );
+
+    window.handleLogin = async function() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      if (!username || !password) return;
+
+      const { data } = await supabase
+        .from('chl_users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .single();
+
+      if (data) {
+        await supabase.from('chl_users').update({ presence: true }).eq('id', data.id);
+        localStorage.setItem('chl_user', JSON.stringify(data));
+        window.location.href = 'dispatch.html';
+      } else {
+        document.getElementById('error-msg').style.display = 'block';
+      }
+    };
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') window.handleLogin();
+    });
+  </script>
+</body>
+</html>

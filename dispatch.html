@@ -978,7 +978,7 @@
     // === INIT ===
     document.addEventListener('DOMContentLoaded', async () => {
       currentUser = JSON.parse(localStorage.getItem('chl_user'));
-      if (!currentUser) { window.location.href = 'index.html'; return; }
+      if (!currentUser) { window.location.href = 'login.html'; return; }
 
       document.getElementById('userLabel').textContent = currentUser.username + ' (' + (ROLE_LABELS[currentUser.role] || currentUser.role) + ')';
 
@@ -1077,10 +1077,16 @@
         if (!card || !u) continue;
         card.className = 'unit-card statut-' + (u.statut || 'attente');
         card.innerHTML = buildUnitHTML(u);
+        // Clear members zone after rebuild
+        const m = document.getElementById('members-' + i);
+        if (m) m.innerHTML = '';
       }
 
       // Place users
       let availCount = 0;
+      // Track first member per unit for leader badge
+      const unitFirstMember = {};
+
       users.forEach(u => {
         const tag = createStaffCard(u);
         if (u.permission === 'dispatcher' && u.patrol === 0) {
@@ -1089,12 +1095,17 @@
         } else if (u.patrol >= 1 && u.patrol <= UNIT_COUNT) {
           const membersZone = document.getElementById('members-' + u.patrol);
           if (membersZone) {
-            // Add leader badge to first
-            if (membersZone.children.length === 0) {
-              const leaderBadge = document.createElement('span');
-              leaderBadge.className = 'member-leader';
-              leaderBadge.textContent = 'CHEF';
-              tag.querySelector('.m-name').after(leaderBadge);
+            // Add leader badge to first member in this unit
+            if (!unitFirstMember[u.patrol]) {
+              unitFirstMember[u.patrol] = true;
+              const nameEl = tag.querySelector('.staff-name');
+              if (nameEl) {
+                const leaderBadge = document.createElement('span');
+                leaderBadge.className = 'member-leader';
+                leaderBadge.textContent = 'CHEF';
+                leaderBadge.style.marginLeft = '6px';
+                nameEl.appendChild(leaderBadge);
+              }
             }
             membersZone.appendChild(tag);
           }
@@ -1307,7 +1318,7 @@
     window.handleLogout = async function() {
       await supabase.from('chl_users').update({ presence: false }).eq('id', currentUser.id);
       localStorage.removeItem('chl_user');
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     };
 
     window.addEventListener('beforeunload', () => {

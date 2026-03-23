@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHL — Centre de Dispatch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #040e1c;
+      --panel: rgba(6, 18, 38, 0.95);
+      --panel2: rgba(8, 22, 46, 0.9);
+      --blue: #0ea5e9;
+      --blue-dim: rgba(14,165,233,0.15);
+      --blue-border: rgba(14,165,233,0.2);
+      --text: #cce8f8;
+      --muted: #4a8fa8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --gray: #6b7280;
+      --header-h: 56px;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === GRID BACKGROUND === */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(14,165,233,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      animation: gridDrift 30s linear infinite;
+    }
+    @keyframes gridDrift { 0%{background-position:0 0} 100%{background-position:32px 32px} }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 30% 20%, rgba(14,165,233,0.06) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 80%, rgba(14,165,233,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* === HEADER === */
+    header {
+      height: var(--header-h);
+      background: rgba(4,14,28,0.98);
+      border-bottom: 1px solid var(--blue-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 100;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      opacity: 0.5;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo svg { width: 28px; height: 28px; filter: drop-shadow(0 0 8px var(--blue)); }
+    .header-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #fff;
+      text-shadow: 0 0 15px rgba(14,165,233,0.5);
+    }
+    .header-subtitle {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--blue);
+      text-transform: uppercase;
+    }
+
+    .header-clock {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--blue);
+      text-shadow: 0 0 10px rgba(14,165,233,0.4);
+      padding: 0 20px;
+      border-left: 1px solid var(--blue-border);
+      border-right: 1px solid var(--blue-border);
+    }
+
+    .header-user {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .header-user span { color: var(--text); font-weight: 600; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #38bdf8; box-shadow: 0 0 15px rgba(14,165,233,0.4); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--blue-border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--blue); }
+
+    /* === MAIN LAYOUT === */
+    .app-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* === LEFT PANEL (Personnel) === */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--blue-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--blue-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-header h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+    .badge-count {
+      background: var(--blue-dim);
+      color: var(--blue);
+      border: 1px solid var(--blue-border);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: auto;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--blue-border); border-radius: 2px; }
+
+    /* Personnel card */
+    .staff-card {
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: rgba(14,165,233,0.06);
+      border: 1px solid var(--blue-border);
+      border-radius: 4px;
+      cursor: grab;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .staff-card:hover { background: var(--blue-dim); border-color: var(--blue); transform: translateX(2px); }
+    .staff-card:active { cursor: grabbing; }
+
+    .staff-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #e0f2fe;
+      margin-bottom: 3px;
+    }
+    .staff-role {
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    /* Role colors */
+    .role-medecin .staff-role { color: #60a5fa; }
+    .role-chirurgien .staff-role { color: #a78bfa; }
+    .role-infirmier .staff-role { color: #34d399; }
+    .role-apprenti_chirurgien .staff-role { color: #fb923c; }
+    .role-apprenti_medecin .staff-role { color: #fbbf24; }
+    .role-stagiaire .staff-role { color: #94a3b8; }
+
+    .role-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .role-medecin .role-dot { background: #60a5fa; }
+    .role-chirurgien .role-dot { background: #a78bfa; }
+    .role-infirmier .role-dot { background: #34d399; }
+    .role-apprenti_chirurgien .role-dot { background: #fb923c; }
+    .role-apprenti_medecin .role-dot { background: #fbbf24; }
+    .role-stagiaire .role-dot { background: #94a3b8; }
+
+    /* Dispatcher zone */
+    .dispatcher-zone {
+      padding: 10px;
+      border-top: 1px solid var(--blue-border);
+    }
+    .dispatcher-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .dispatcher-slot {
+      min-height: 50px;
+      background: rgba(14,165,233,0.05);
+      border: 1px dashed rgba(14,165,233,0.3);
+      border-radius: 4px;
+      padding: 6px;
+    }
+    .staff-card.is-dispatcher {
+      background: rgba(14,165,233,0.15);
+      border-color: var(--blue);
+    }
+    .staff-card.is-dispatcher::after {
+      content: '📡 DISPATCH';
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    /* === CENTER PANEL (Ambulances) === */
+    .center-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .ambulances-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      align-content: start;
+    }
+    .ambulances-grid::-webkit-scrollbar { width: 5px; }
+    .ambulances-grid::-webkit-scrollbar-track { background: transparent; }
+    .ambulances-grid::-webkit-scrollbar-thumb { background: var(--blue-border); border-radius: 2px; }
+
+    /* Ambulance unit card */
+    .unit-card {
+      background: var(--panel);
+      border: 1px solid var(--blue-border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .unit-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--blue);
+      transition: background 0.2s;
+    }
+
+    /* Status colors for unit card */
+    .unit-card.statut-intervention::before { background: var(--red); }
+    .unit-card.statut-intervention { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.05); }
+    .unit-card.statut-patrouille::before { background: var(--green); }
+    .unit-card.statut-patrouille { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
+    .unit-card.statut-standby::before { background: var(--yellow); }
+    .unit-card.statut-standby { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
+    .unit-card.statut-attente::before { background: var(--gray); }
+
+    .unit-header {
+      padding: 10px 12px 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--blue-border);
+    }
+
+    .unit-icon {
+      width: 32px; height: 32px;
+      background: var(--blue-dim);
+      border: 1px solid var(--blue-border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .unit-info { flex: 1; min-width: 0; }
+    .unit-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+    .unit-vehicle {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .unit-status-badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .badge-intervention { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.4); }
+    .badge-patrouille { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.4); }
+    .badge-standby { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4); }
+    .badge-attente { background: rgba(107,114,128,0.2); color: #9ca3af; border: 1px solid rgba(107,114,128,0.4); }
+
+    .unit-members {
+      min-height: 60px;
+      padding: 8px 10px;
+    }
+    .unit-members-empty {
+      font-size: 11px;
+      color: rgba(74,143,168,0.5);
+      text-align: center;
+      padding: 12px;
+      letter-spacing: 1px;
+    }
+
+    .member-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      background: rgba(14,165,233,0.06);
+      border: 1px solid rgba(14,165,233,0.12);
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: grab;
+      transition: all 0.15s;
+    }
+    .member-tag:active { cursor: grabbing; }
+    .member-tag:hover { background: var(--blue-dim); border-color: var(--blue-border); }
+
+    .member-tag .m-name { flex: 1; font-weight: 600; color: var(--text); }
+    .member-tag .m-role { font-size: 10px; }
+    .member-leader {
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--blue);
+      font-weight: 700;
+      background: var(--blue-dim);
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    .unit-footer {
+      padding: 8px 10px;
+      border-top: 1px solid var(--blue-border);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-xs {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--blue-border);
+      border-radius: 2px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-xs:hover { color: var(--text); border-color: var(--blue); background: var(--blue-dim); }
+
+    .location-select {
+      flex: 1;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 11px;
+      background: rgba(14,165,233,0.05);
+      border: 1px solid var(--blue-border);
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    .location-select:focus { border-color: var(--blue); }
+    .location-select option { background: #050d1a; }
+
+    /* === RIGHT PANEL (Map) === */
+    .map-panel {
+      width: 380px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--blue-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .map-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--blue-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .map-header h3 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--blue);
+      text-transform: uppercase;
+    }
+
+    .map-legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--blue-border);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #0a1628;
+    }
+    .map-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.8;
+      display: block;
+      filter: saturate(0.7) brightness(0.7) hue-rotate(180deg);
+    }
+    /* Map overlay for HUD feel */
+    .map-container::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(4,14,28,0.4) 0%, transparent 20%, transparent 80%, rgba(4,14,28,0.4) 100%),
+        linear-gradient(to right, rgba(4,14,28,0.3) 0%, transparent 15%, transparent 85%, rgba(4,14,28,0.3) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .map-markers {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    .map-marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+    }
+    .marker-pulse {
+      position: absolute;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: markerPulse 2s ease-out infinite;
+    }
+    @keyframes markerPulse {
+      0% { transform: translate(-50%,-50%) scale(0.8); opacity: 0.8; }
+      100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+    }
+    .marker-body {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      font-family: 'Rajdhani', sans-serif;
+      box-shadow: 0 0 10px currentColor;
+      position: relative;
+      z-index: 2;
+    }
+    .marker-tip {
+      position: absolute;
+      bottom: -8px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: white;
+      background: rgba(0,0,0,0.7);
+      padding: 1px 5px;
+      border-radius: 2px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .map-marker:hover .marker-tooltip {
+      display: block;
+    }
+    .marker-tooltip {
+      display: none;
+      position: absolute;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(4,14,28,0.95);
+      border: 1px solid var(--blue-border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Marker status colors */
+    .marker-intervention .marker-pulse { border: 2px solid var(--red); }
+    .marker-intervention .marker-body { background: var(--red); }
+    .marker-patrouille .marker-pulse { border: 2px solid var(--green); }
+    .marker-patrouille .marker-body { background: var(--green); }
+    .marker-standby .marker-pulse { border: 2px solid var(--yellow); }
+    .marker-standby .marker-body { background: var(--yellow); }
+    .marker-attente .marker-pulse { border: 2px solid var(--gray); }
+    .marker-attente .marker-body { background: var(--gray); }
+
+    /* === BOTTOM STATS BAR === */
+    .stats-bar {
+      height: 36px;
+      background: rgba(4,14,28,0.98);
+      border-top: 1px solid var(--blue-border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 24px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 100;
+    }
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+    .stat-item span { color: var(--text); font-weight: 600; }
+    .stat-sep {
+      width: 1px; height: 16px;
+      background: var(--blue-border);
+    }
+
+    /* === MODALS === */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+      background: rgba(6,18,38,0.98);
+      border: 1px solid var(--blue-border);
+      border-radius: 6px;
+      padding: 28px;
+      width: 360px;
+      position: relative;
+    }
+    .modal-box::before, .modal-box::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      border-color: var(--blue);
+      border-style: solid;
+    }
+    .modal-box::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .modal-box::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .modal-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .modal-field { margin-bottom: 16px; }
+    .modal-field label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .modal-field select, .modal-field input {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(14,165,233,0.06);
+      border: 1px solid var(--blue-border);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .modal-field select:focus, .modal-field input:focus {
+      border-color: var(--blue);
+      background: rgba(14,165,233,0.1);
+    }
+    .modal-field select option { background: #050d1a; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Staff info modal */
+    .staff-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .info-block {
+      background: rgba(14,165,233,0.05);
+      border: 1px solid var(--blue-border);
+      padding: 10px 12px;
+      border-radius: 3px;
+    }
+    .info-block .label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .info-block .value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Sortable ghost */
+    .sortable-ghost { opacity: 0.3; }
+
+    /* Warning banner */
+    .warning-bar {
+      background: rgba(245,158,11,0.1);
+      border-bottom: 1px solid rgba(245,158,11,0.2);
+      padding: 6px 20px;
+      font-size: 11px;
+      color: #fcd34d;
+      letter-spacing: 1px;
+      text-align: center;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--blue-border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-logo">
+        <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="2" width="8" height="24" rx="2" fill="#0ea5e9"/>
+          <rect x="2" y="10" width="24" height="8" rx="2" fill="#0ea5e9"/>
+        </svg>
+        <div>
+          <div class="header-title">CHL</div>
+          <div class="header-subtitle">Centre Hospitalier Légrand</div>
+        </div>
+      </div>
+      <div class="header-clock" id="clock">00:00:00</div>
+    </div>
+    <div class="header-user">
+      Connecté en tant que <span id="userLabel">—</span>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-danger" id="resetBtn" style="display:none" onclick="confirmReset()">⟳ Reset</button>
+      <button class="btn btn-ghost" onclick="handleLogout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="warning-bar">
+    ⚠ &nbsp; Veuillez toujours cliquer sur « Déconnexion » avant de quitter l'application.
+  </div>
+
+  <!-- BODY -->
+  <div class="app-body">
+
+    <!-- SIDEBAR: Personnel disponible + Dispatcher -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>Personnel disponible</h3>
+        <div class="badge-count" id="availCount">0</div>
+      </div>
+      <div class="sidebar-scroll" id="available-list">
+        <!-- Staff cards injected here -->
+      </div>
+      <div class="dispatcher-zone">
+        <div class="dispatcher-label">📡 Dispatcher en poste</div>
+        <div class="dispatcher-slot" id="dispatcher-slot">
+          <!-- Dispatcher card injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: Ambulance Units -->
+    <div class="center-panel">
+      <div class="ambulances-grid" id="units-grid">
+        <!-- Unit cards injected here -->
+      </div>
+    </div>
+
+    <!-- MAP PANEL -->
+    <div class="map-panel">
+      <div class="map-header">
+        <h3>🗺 Vue Tactique</h3>
+      </div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>INTERVENTION</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>PATROUILLE</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>STAND-BY</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--gray)"></div>ATTENTE</div>
+      </div>
+      <div class="map-container">
+        <img class="map-img" src="https://www.bragitoff.com/wp-content/uploads/2015/11/GTAV_SATELLITE_2048x2048.png" alt="Los Santos Map" id="mapImg">
+        <div class="map-markers" id="map-markers"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">Unités actives: <span id="statActive">0</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">En intervention: <span id="statIntervention" style="color:#fca5a5">0</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">En patrouille: <span id="statPatrouille" style="color:#86efac">0</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">Stand-By: <span id="statStandby" style="color:#fcd34d">0</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">Personnel présent: <span id="statPersonnel">0</span></div>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Status Modal -->
+  <div class="modal-overlay" id="modal-statut">
+    <div class="modal-box">
+      <div class="modal-title">Changer le statut</div>
+      <div class="modal-field">
+        <label>Statut de l'unité</label>
+        <select id="statut-select">
+          <option value="attente">En Attente d'Intervention</option>
+          <option value="standby">Stand-By</option>
+          <option value="patrouille">En Patrouille</option>
+          <option value="intervention">En Intervention</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="saveStatut()">Confirmer</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-statut')">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vehicle Modal -->
+  <div class="modal-overlay" id="modal-vehicle">
+    <div class="modal-box">
+      <div class="modal-title">Type de véhicule</div>
+      <div class="modal-field">
+        <label>Véhicule assigné</label>
+        <select id="vehicle-select">
+          <option value="">— Aucun —</option>
+          <option value="Ambulance">🚑 Ambulance</option>
+          <option value="Moto">🏍 Moto</option>
+          <option value="Véhicule Médecin">🚗 Véhicule Médecin</option>
+          <option value="Ambulance Pick-up">🚐 Ambulance Pick-up</option>
+          <option value="Hélicoptère">🚁 Hélicoptère</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" style="flex:1" onclick="saveVehicle()">Confirmer</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-vehicle')">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff Info Modal -->
+  <div class="modal-overlay" id="modal-staff">
+    <div class="modal-box">
+      <div class="modal-title">Fiche du soignant</div>
+      <div class="staff-info-grid" id="staff-info-grid"></div>
+      <button class="btn btn-ghost" style="width:100%" onclick="closeModal('modal-staff')">Fermer</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://gktawbaposndfxijkxdk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk'
+    );
+
+    let currentUser = null;
+    let currentUnitNum = null;
+    const UNIT_COUNT = 8;
+
+    // === Locations with GTA V map coordinates (% based on image size) ===
+    const LOCATIONS = [
+      '', 'Paleto Bay', 'Mount Chiliad', 'Grapeseed', 'Sandy Shores',
+      'Alamo Sea', 'Raton Canyon', 'Tongva Hills', 'Banham Canyon',
+      'Vinewood Hills', 'Rockford Hills', 'Downtown Vinewood', 'Downtown',
+      'Vespucci Beach', 'Del Perro', 'Little Seoul', 'South Los Santos',
+      'Los Santos International Airport', 'Port of Los Santos'
+    ];
+
+    const LOCATION_COORDS = {
+      'Paleto Bay': [15.38, 44.82],
+      'Mount Chiliad': [22.85, 50],
+      'Grapeseed': [28.27, 63.43],
+      'Sandy Shores': [37.84, 61.96],
+      'Alamo Sea': [38.53, 50.68],
+      'Raton Canyon': [32.28, 37.84],
+      'Tongva Hills': [51.42, 34.13],
+      'Banham Canyon': [53.56, 25],
+      'Vinewood Hills': [62.11, 42.82],
+      'Rockford Hills': [69.34, 39.26],
+      'Downtown Vinewood': [65.38, 46.97],
+      'Downtown': [73.44, 45.85],
+      'Vespucci Beach': [78.56, 35.11],
+      'Del Perro': [72.41, 30.81],
+      'Little Seoul': [74.85, 40.38],
+      'South Los Santos': [79.93, 46.83],
+      'Los Santos International Airport': [88.43, 35.55],
+      'Port of Los Santos': [88.13, 47.66]
+    };
+
+    const ROLE_LABELS = {
+      medecin: 'Médecin',
+      chirurgien: 'Chirurgien',
+      infirmier: 'Infirmier',
+      apprenti_chirurgien: 'Apprenti Chirurgien',
+      apprenti_medecin: 'Apprenti Médecin',
+      stagiaire: 'Stagiaire'
+    };
+
+    const STATUS_LABELS = {
+      attente: "En Attente",
+      standby: "Stand-By",
+      patrouille: "En Patrouille",
+      intervention: "En Intervention"
+    };
+
+    const VEHICLE_ICONS = {
+      'Ambulance': '🚑',
+      'Moto': '🏍',
+      'Véhicule Médecin': '🚗',
+      'Ambulance Pick-up': '🚐',
+      'Hélicoptère': '🚁',
+      '': '🚒'
+    };
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent =
+        String(now.getHours()).padStart(2,'0') + ':' +
+        String(now.getMinutes()).padStart(2,'0') + ':' +
+        String(now.getSeconds()).padStart(2,'0');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // === INIT ===
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = JSON.parse(localStorage.getItem('chl_user'));
+      if (!currentUser) { window.location.href = 'login.html'; return; }
+
+      document.getElementById('userLabel').textContent = currentUser.username + ' (' + (ROLE_LABELS[currentUser.role] || currentUser.role) + ')';
+
+      if (currentUser.permission === 'admin') {
+        document.getElementById('resetBtn').style.display = 'block';
+      }
+
+      await buildUnitCards();
+      await refresh();
+
+      setInterval(refresh, 8000);
+    });
+
+    // === BUILD STATIC UNIT CARDS ===
+    async function buildUnitCards() {
+      const { data: units } = await supabase.from('chl_units').select('*').order('num');
+      const grid = document.getElementById('units-grid');
+      grid.innerHTML = '';
+
+      const unitList = units || Array.from({length: UNIT_COUNT}, (_,i) => ({ num: i+1, statut: 'attente', vehicle: '', localisation: '' }));
+
+      unitList.forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'unit-card statut-' + (u.statut || 'attente');
+        div.id = 'unit-card-' + u.num;
+        div.innerHTML = buildUnitHTML(u);
+        grid.appendChild(div);
+      });
+    }
+
+    function buildUnitHTML(u) {
+      const num = u.num;
+      const statut = u.statut || 'attente';
+      const vehicle = u.vehicle || '';
+      const loc = u.localisation || '';
+
+      const statusBadge = `<span class="unit-status-badge badge-${statut}">${STATUS_LABELS[statut]}</span>`;
+      const vehicleIcon = VEHICLE_ICONS[vehicle] || '🚑';
+      const vehicleLabel = vehicle || 'Aucun véhicule';
+
+      let locOptions = LOCATIONS.map(l =>
+        `<option value="${l}" ${l === loc ? 'selected' : ''}>${l || '— Localisation —'}</option>`
+      ).join('');
+
+      return `
+        <div class="unit-header">
+          <div class="unit-icon">${vehicleIcon}</div>
+          <div class="unit-info">
+            <div class="unit-name">AMB-${String(num).padStart(2,'0')}</div>
+            <div class="unit-vehicle">${vehicleLabel}</div>
+          </div>
+          ${statusBadge}
+        </div>
+        <div class="unit-members" id="members-${num}" data-unit="${num}"></div>
+        <div class="unit-footer">
+          <select class="location-select" id="loc-${num}" onchange="updateLocation(${num})">
+            ${locOptions}
+          </select>
+          <button class="btn-xs" onclick="openStatutModal(${num})">Statut</button>
+          <button class="btn-xs" onclick="openVehicleModal(${num})">Véhicule</button>
+        </div>
+      `;
+    }
+
+    // === MAIN REFRESH ===
+    async function refresh() {
+      const { data: fresh } = await supabase.from('chl_users').select('*').eq('id', currentUser.id).single();
+      if (fresh) { currentUser = fresh; localStorage.setItem('chl_user', JSON.stringify(fresh)); }
+
+      const [{ data: users }, { data: units }] = await Promise.all([
+        supabase.from('chl_users').select('*').eq('presence', true),
+        supabase.from('chl_units').select('*')
+      ]);
+
+      renderBoard(users || [], units || []);
+      renderMapMarkers(units || [], users || []);
+      updateStats(users || [], units || []);
+    }
+
+    function renderBoard(users, units) {
+      // Clear zones
+      document.getElementById('available-list').innerHTML = '';
+      document.getElementById('dispatcher-slot').innerHTML = '';
+      for (let i = 1; i <= UNIT_COUNT; i++) {
+        const m = document.getElementById('members-' + i);
+        if (m) m.innerHTML = '';
+      }
+
+      // Update unit card classes and content
+      const unitMap = {};
+      units.forEach(u => unitMap[u.num] = u);
+
+      for (let i = 1; i <= UNIT_COUNT; i++) {
+        const u = unitMap[i];
+        const card = document.getElementById('unit-card-' + i);
+        if (!card || !u) continue;
+        card.className = 'unit-card statut-' + (u.statut || 'attente');
+        card.innerHTML = buildUnitHTML(u);
+      }
+
+      // Place users
+      let availCount = 0;
+      users.forEach(u => {
+        const tag = createStaffCard(u);
+        if (u.permission === 'dispatcher' && u.patrol === 0) {
+          tag.classList.add('is-dispatcher');
+          document.getElementById('dispatcher-slot').appendChild(tag);
+        } else if (u.patrol >= 1 && u.patrol <= UNIT_COUNT) {
+          const membersZone = document.getElementById('members-' + u.patrol);
+          if (membersZone) {
+            // Add leader badge to first
+            if (membersZone.children.length === 0) {
+              const leaderBadge = document.createElement('span');
+              leaderBadge.className = 'member-leader';
+              leaderBadge.textContent = 'CHEF';
+              tag.querySelector('.m-name').after(leaderBadge);
+            }
+            membersZone.appendChild(tag);
+          }
+        } else {
+          document.getElementById('available-list').appendChild(tag);
+          availCount++;
+        }
+      });
+
+      document.getElementById('availCount').textContent = availCount;
+
+      // Add empty state to empty member zones
+      for (let i = 1; i <= UNIT_COUNT; i++) {
+        const m = document.getElementById('members-' + i);
+        if (m && m.children.length === 0) {
+          m.innerHTML = '<div class="unit-members-empty">Aucun soignant assigné</div>';
+        }
+      }
+
+      initDragAndDrop();
+    }
+
+    function createStaffCard(u) {
+      const div = document.createElement('div');
+      div.className = 'staff-card role-' + (u.role || 'stagiaire');
+      div.dataset.userId = u.id;
+      div.dataset.permission = u.permission || 'user';
+      div.innerHTML = `
+        <div class="staff-name">${u.username}</div>
+        <div class="staff-role">
+          <span class="role-dot"></span>${ROLE_LABELS[u.role] || u.role || 'Stagiaire'}
+        </div>
+      `;
+      div.addEventListener('dblclick', () => openStaffModal(u.id));
+      return div;
+    }
+
+    // === DRAG AND DROP ===
+    function initDragAndDrop() {
+      const isAdmin = currentUser.permission === 'admin';
+      const isDispatcher = currentUser.permission === 'dispatcher' && currentUser.patrol === 0;
+      const canManage = isAdmin || isDispatcher;
+
+      const opts = {
+        group: 'staff',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: async (evt) => {
+          if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+          const userId = evt.item.dataset.userId;
+          const perm = evt.item.dataset.permission;
+
+          if (!canManage) { await refresh(); return; }
+
+          let patrol = null;
+          const toEl = evt.to;
+          if (toEl.id === 'dispatcher-slot') {
+            if (perm !== 'dispatcher') { await refresh(); return; }
+            patrol = 0;
+          } else if (toEl.dataset.unit) {
+            patrol = parseInt(toEl.dataset.unit);
+          }
+
+          await supabase.from('chl_users').update({ patrol }).eq('id', userId);
+          await refresh();
+        }
+      };
+
+      new Sortable(document.getElementById('available-list'), opts);
+      new Sortable(document.getElementById('dispatcher-slot'), opts);
+
+      for (let i = 1; i <= UNIT_COUNT; i++) {
+        const m = document.getElementById('members-' + i);
+        if (m) new Sortable(m, opts);
+      }
+    }
+
+    // === MAP MARKERS ===
+    function renderMapMarkers(units, users) {
+      const container = document.getElementById('map-markers');
+      container.innerHTML = '';
+
+      const locGroups = {};
+      units.forEach(u => {
+        if (!u.localisation) return;
+        if (!locGroups[u.localisation]) locGroups[u.localisation] = [];
+        locGroups[u.localisation].push(u);
+      });
+
+      Object.entries(locGroups).forEach(([loc, unitsList]) => {
+        const coords = LOCATION_COORDS[loc];
+        if (!coords) return;
+
+        // Determine dominant status
+        const statuts = unitsList.map(u => u.statut || 'attente');
+        let dom = 'attente';
+        if (statuts.includes('intervention')) dom = 'intervention';
+        else if (statuts.includes('patrouille')) dom = 'patrouille';
+        else if (statuts.includes('standby')) dom = 'standby';
+
+        const names = unitsList.map(u => 'AMB-' + String(u.num).padStart(2,'0')).join(', ');
+
+        // Offset multiple markers at same location
+        unitsList.forEach((u, idx) => {
+          const offset = (idx - (unitsList.length-1)/2) * 28;
+          const marker = document.createElement('div');
+          marker.className = 'map-marker marker-' + (u.statut || 'attente');
+          marker.style.top = coords[0] + '%';
+          marker.style.left = `calc(${coords[1]}% + ${offset}px)`;
+
+          const memberNames = users
+            .filter(user => user.patrol === u.num && user.presence)
+            .map(user => user.username)
+            .join(', ') || 'Aucun soignant';
+
+          marker.innerHTML = `
+            <div class="marker-pulse"></div>
+            <div class="marker-body">${u.num}</div>
+            <div class="marker-tooltip">
+              <strong>AMB-${String(u.num).padStart(2,'0')}</strong><br>
+              ${STATUS_LABELS[u.statut||'attente']}<br>
+              <span style="color:var(--muted);font-size:10px">${loc}</span><br>
+              <span style="font-size:10px">${memberNames}</span>
+            </div>
+          `;
+          container.appendChild(marker);
+        });
+      });
+    }
+
+    // === STATS ===
+    function updateStats(users, units) {
+      const active = units.filter(u => u.statut && u.statut !== 'attente').length;
+      const inter = units.filter(u => u.statut === 'intervention').length;
+      const pat = units.filter(u => u.statut === 'patrouille').length;
+      const sb = units.filter(u => u.statut === 'standby').length;
+
+      document.getElementById('statActive').textContent = active;
+      document.getElementById('statIntervention').textContent = inter;
+      document.getElementById('statPatrouille').textContent = pat;
+      document.getElementById('statStandby').textContent = sb;
+      document.getElementById('statPersonnel').textContent = users.length;
+    }
+
+    // === MODALS ===
+    window.openStatutModal = function(num) {
+      currentUnitNum = num;
+      document.getElementById('modal-statut').classList.add('active');
+    };
+
+    window.saveStatut = async function() {
+      const statut = document.getElementById('statut-select').value;
+      await supabase.from('chl_units').update({ statut }).eq('num', currentUnitNum);
+      closeModal('modal-statut');
+      await refresh();
+    };
+
+    window.openVehicleModal = function(num) {
+      currentUnitNum = num;
+      document.getElementById('modal-vehicle').classList.add('active');
+    };
+
+    window.saveVehicle = async function() {
+      const vehicle = document.getElementById('vehicle-select').value;
+      await supabase.from('chl_units').update({ vehicle }).eq('num', currentUnitNum);
+      closeModal('modal-vehicle');
+      await refresh();
+    };
+
+    window.updateLocation = async function(num) {
+      const loc = document.getElementById('loc-' + num).value;
+      await supabase.from('chl_units').update({ localisation: loc || null }).eq('num', num);
+      await refresh();
+    };
+
+    async function openStaffModal(id) {
+      const { data: u } = await supabase.from('chl_users').select('*').eq('id', id).single();
+      if (!u) return;
+      document.getElementById('staff-info-grid').innerHTML = `
+        <div class="info-block"><div class="label">Nom</div><div class="value">${u.username}</div></div>
+        <div class="info-block"><div class="label">Rôle</div><div class="value">${ROLE_LABELS[u.role] || u.role || '—'}</div></div>
+        <div class="info-block"><div class="label">Permission</div><div class="value">${u.permission || 'user'}</div></div>
+        <div class="info-block"><div class="label">Présence</div><div class="value" style="color:var(--green)">${u.presence ? 'Présent ✓' : 'Absent'}</div></div>
+      `;
+      document.getElementById('modal-staff').classList.add('active');
+    }
+
+    window.closeModal = function(id) {
+      document.getElementById(id).classList.remove('active');
+    };
+
+    // Close modal on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => {
+        if (e.target === el) el.classList.remove('active');
+      });
+    });
+
+    // === RESET ===
+    window.confirmReset = async function() {
+      if (!confirm('⚠️ Réinitialiser toutes les unités et les assignments ? Action irréversible.')) return;
+      await supabase.from('chl_units').update({ statut: 'attente', vehicle: null, localisation: null });
+      await supabase.from('chl_users').update({ patrol: null }).neq('permission', 'dispatcher');
+      alert('Réinitialisation effectuée.');
+      await buildUnitCards();
+      await refresh();
+    };
+
+    // === LOGOUT ===
+    window.handleLogout = async function() {
+      await supabase.from('chl_users').update({ presence: false }).eq('id', currentUser.id);
+      localStorage.removeItem('chl_user');
+      window.location.href = 'login.html';
+    };
+
+    window.addEventListener('beforeunload', () => {
+      if (currentUser) {
+        navigator.sendBeacon(
+          'https://gktawbaposndfxijkxdk.supabase.co/rest/v1/chl_users?id=eq.' + currentUser.id,
+          JSON.stringify({ presence: false })
+        );
+      }
+    });
+  </script>
+</body>
+</html>

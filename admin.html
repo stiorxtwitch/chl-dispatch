@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHL — Administration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #040e1c; --panel: rgba(6,18,38,0.95);
+      --blue: #0ea5e9; --blue-dim: rgba(14,165,233,0.15); --blue-border: rgba(14,165,233,0.2);
+      --text: #cce8f8; --muted: #4a8fa8;
+      --green: #22c55e; --red: #ef4444; --yellow: #f59e0b; --purple: #a855f7; --gray: #6b7280;
+    }
+    html, body { height: 100%; overflow-x: hidden; }
+    body { font-family: 'Exo 2', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+    body::before { content: ''; position: fixed; inset: 0; z-index: 0;
+      background-image: linear-gradient(rgba(14,165,233,0.04) 1px,transparent 1px), linear-gradient(90deg,rgba(14,165,233,0.04) 1px,transparent 1px);
+      background-size: 32px 32px; animation: gridDrift 30s linear infinite; pointer-events: none; }
+    @keyframes gridDrift { 0%{background-position:0 0} 100%{background-position:32px 32px} }
+
+    header { height:56px; background:rgba(4,14,28,0.98); border-bottom:1px solid var(--blue-border);
+      display:flex; align-items:center; justify-content:space-between; padding:0 24px; flex-shrink:0; position:relative; z-index:100; }
+    header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,var(--blue),transparent); opacity:0.5; }
+    .header-left { display:flex; align-items:center; gap:16px; }
+    .header-logo { display:flex; align-items:center; gap:10px; }
+    .header-logo svg { width:28px; height:28px; filter:drop-shadow(0 0 8px var(--blue)); }
+    .header-title { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; letter-spacing:4px; color:#fff; text-shadow:0 0 15px rgba(14,165,233,0.5); }
+    .header-subtitle { font-size:11px; letter-spacing:2px; color:var(--blue); text-transform:uppercase; }
+    .header-clock { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:600; letter-spacing:2px; color:var(--blue);
+      text-shadow:0 0 10px rgba(14,165,233,0.4); padding:0 20px; border-left:1px solid var(--blue-border); border-right:1px solid var(--blue-border); }
+    .page-tag { background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.3); color:#c084fc;
+      font-family:'Rajdhani',sans-serif; font-size:11px; font-weight:700; letter-spacing:2px; padding:3px 10px; border-radius:2px; text-transform:uppercase; }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .btn { font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+      padding:8px 16px; border:none; border-radius:2px; cursor:pointer; transition:all 0.2s; }
+    .btn-primary { background:var(--blue); color:#fff; }
+    .btn-primary:hover { background:#38bdf8; box-shadow:0 0 15px rgba(14,165,233,0.4); }
+    .btn-success { background:rgba(34,197,94,0.15); color:#86efac; border:1px solid rgba(34,197,94,0.3); }
+    .btn-success:hover { background:rgba(34,197,94,0.25); box-shadow:0 0 12px rgba(34,197,94,0.2); }
+    .btn-danger { background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover { background:rgba(239,68,68,0.25); }
+    .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--blue-border); }
+    .btn-ghost:hover { color:var(--text); border-color:var(--blue); }
+    .btn-sm { padding:5px 11px; font-size:11px; }
+
+    .main { flex:1; padding:24px; position:relative; z-index:1; max-width:1400px; margin:0 auto; width:100%; }
+
+    .top-row { display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+    .stat-cards { display:flex; gap:10px; flex-wrap:wrap; }
+    .stat-card { background:var(--panel); border:1px solid var(--blue-border); border-radius:4px; padding:10px 16px; display:flex; align-items:center; gap:10px; min-width:110px; }
+    .stat-card .sc-icon { font-size:18px; }
+    .stat-card .sc-val { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:#fff; line-height:1; }
+    .stat-card .sc-label { font-size:10px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; }
+    .search-box { flex:1; min-width:180px; position:relative; }
+    .search-box input { width:100%; background:rgba(14,165,233,0.06); border:1px solid var(--blue-border); border-radius:2px;
+      color:var(--text); font-family:'Exo 2',sans-serif; font-size:13px; padding:9px 12px 9px 36px; outline:none; transition:all 0.2s; }
+    .search-box input:focus { border-color:var(--blue); background:rgba(14,165,233,0.1); }
+    .search-box::before { content:'🔍'; position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
+    .filter-select { background:rgba(14,165,233,0.06); border:1px solid var(--blue-border); border-radius:2px;
+      color:var(--text); font-family:'Exo 2',sans-serif; font-size:13px; padding:9px 12px; outline:none; cursor:pointer; }
+    .filter-select:focus { border-color:var(--blue); }
+    .filter-select option { background:#050d1a; }
+
+    .table-wrapper { background:var(--panel); border:1px solid var(--blue-border); border-radius:6px; overflow:hidden; }
+    .table-header-bar { padding:12px 16px; border-bottom:1px solid var(--blue-border); display:flex; align-items:center; justify-content:space-between; }
+    .table-title { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; color:var(--blue); text-transform:uppercase; }
+    .table-hint { font-size:11px; color:var(--muted); letter-spacing:1px; }
+    .table-scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:rgba(14,165,233,0.07); }
+    thead th { font-family:'Rajdhani',sans-serif; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+      color:var(--muted); padding:11px 14px; text-align:left; border-bottom:1px solid var(--blue-border); white-space:nowrap; cursor:pointer; user-select:none; }
+    thead th:hover { color:var(--text); }
+    thead th.sorted { color:var(--blue); }
+    thead th .sort-arrow { margin-left:4px; font-size:9px; }
+    tbody tr { border-bottom:1px solid rgba(14,165,233,0.07); transition:background 0.12s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:rgba(14,165,233,0.06); }
+    tbody tr.row-online { background:rgba(34,197,94,0.03); }
+    tbody tr.row-online:hover { background:rgba(34,197,94,0.07); }
+    tbody td { padding:11px 14px; font-size:13px; vertical-align:middle; }
+
+    .badge { display:inline-block; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+      padding:3px 8px; border-radius:2px; white-space:nowrap; }
+    .badge-online  { background:rgba(34,197,94,0.15); color:#86efac; border:1px solid rgba(34,197,94,0.3); }
+    .badge-offline { background:rgba(107,114,128,0.15); color:#9ca3af; border:1px solid rgba(107,114,128,0.3); }
+    .badge-admin   { background:rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.3); }
+    .badge-dispatcher { background:rgba(14,165,233,0.15); color:#7dd3fc; border:1px solid rgba(14,165,233,0.3); }
+    .badge-user    { background:rgba(107,114,128,0.1); color:#9ca3af; border:1px solid rgba(107,114,128,0.2); }
+
+    .role-color-medecin { color:#60a5fa; }
+    .role-color-chirurgien { color:#a78bfa; }
+    .role-color-infirmier { color:#34d399; }
+    .role-color-apprenti_chirurgien { color:#fb923c; }
+    .role-color-apprenti_medecin { color:#fbbf24; }
+    .role-color-stagiaire { color:#94a3b8; }
+
+    .online-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+    .online-dot.on { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease infinite; }
+    .online-dot.off { background:var(--gray); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .id-cell { font-family:'Rajdhani',sans-serif; font-size:12px; color:var(--muted); letter-spacing:1px; }
+    .patrol-badge { font-family:'Rajdhani',sans-serif; font-size:12px; font-weight:700; color:var(--blue); background:var(--blue-dim); border:1px solid var(--blue-border); padding:2px 7px; border-radius:2px; }
+    .patrol-none { color:var(--gray); font-size:11px; }
+    .empty-row td { text-align:center; padding:40px; color:var(--muted); font-size:13px; letter-spacing:1px; }
+
+    #toast-container { position:fixed; bottom:60px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+    .toast { background:rgba(6,18,38,0.97); border:1px solid var(--blue-border); border-radius:4px; padding:11px 18px;
+      font-size:13px; color:var(--text); display:flex; align-items:center; gap:9px; min-width:240px;
+      animation:toastIn 0.2s ease; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+    .toast.success { border-color:rgba(34,197,94,0.4); color:#86efac; }
+    .toast.error   { border-color:rgba(239,68,68,0.4); color:#fca5a5; }
+    @keyframes toastIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; }
+    .modal-overlay.active { display:flex; }
+    .modal-box { background:rgba(6,18,38,0.98); border:1px solid var(--blue-border); border-radius:6px; padding:28px; width:400px; position:relative; max-width:95vw; }
+    .modal-box::before,.modal-box::after { content:''; position:absolute; width:14px; height:14px; border-color:var(--blue); border-style:solid; }
+    .modal-box::before { top:-1px; left:-1px; border-width:2px 0 0 2px; }
+    .modal-box::after  { bottom:-1px; right:-1px; border-width:0 2px 2px 0; }
+    .modal-title { font-family:'Rajdhani',sans-serif; font-size:17px; font-weight:700; letter-spacing:2px; color:var(--blue); text-transform:uppercase; margin-bottom:20px; }
+    .modal-field { margin-bottom:14px; }
+    .modal-field label { display:block; font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+    .modal-field select,.modal-field input { width:100%; padding:9px 11px; background:rgba(14,165,233,0.06); border:1px solid var(--blue-border);
+      border-radius:2px; color:var(--text); font-family:'Exo 2',sans-serif; font-size:14px; outline:none; transition:all 0.2s; }
+    .modal-field select:focus,.modal-field input:focus { border-color:var(--blue); background:rgba(14,165,233,0.1); }
+    .modal-field select option { background:#050d1a; }
+    .modal-actions { display:flex; gap:10px; margin-top:20px; }
+    .password-hint { font-size:10px; color:var(--muted); margin-top:4px; letter-spacing:0.5px; }
+    .delete-confirm { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:4px; padding:14px; margin-bottom:16px; font-size:13px; color:#fca5a5; line-height:1.6; }
+    .delete-confirm strong { color:#f87171; }
+    .warn-confirm { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25); border-radius:4px; padding:14px; margin-bottom:16px; font-size:13px; color:#fcd34d; line-height:1.6; }
+    .warn-confirm strong { color:#fbbf24; }
+
+    .bottom-toolbar { position:fixed; bottom:0; left:0; right:0; background:rgba(4,14,28,0.97); border-top:1px solid var(--blue-border); padding:7px 24px; display:flex; align-items:center; gap:12px; z-index:100; }
+    .tb-sep { width:1px; height:16px; background:var(--blue-border); }
+    .tb-label { font-size:11px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; font-family:'Rajdhani',sans-serif; font-weight:700; white-space:nowrap; }
+    .spacer-bottom { height:44px; }
+
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--blue-border); border-radius:2px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-logo">
+      <svg viewBox="0 0 28 28" fill="none"><rect x="10" y="2" width="8" height="24" rx="2" fill="#0ea5e9"/><rect x="2" y="10" width="24" height="8" rx="2" fill="#0ea5e9"/></svg>
+      <div><div class="header-title">CHL</div><div class="header-subtitle">Centre Hospitalier Liège</div></div>
+    </div>
+    <div class="header-clock" id="clock">00:00:00</div>
+    <div class="page-tag">⚙ Administration</div>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-success" onclick="openCreateModal()">+ Nouvel utilisateur</button>
+    <button class="btn btn-ghost" onclick="goBack()">← Dispatch</button>
+    <button class="btn btn-ghost" onclick="handleLogout()">Déconnexion</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- STATS + FILTRES -->
+  <div class="top-row">
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="sc-icon">👤</div>
+        <div><div class="sc-val" id="statTotal">0</div><div class="sc-label">Total</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon">🟢</div>
+        <div><div class="sc-val" id="statOnline" style="color:var(--green)">0</div><div class="sc-label">En ligne</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon">🛡</div>
+        <div><div class="sc-val" id="statAdmins" style="color:#c084fc">0</div><div class="sc-label">Admins</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon">📡</div>
+        <div><div class="sc-val" id="statDisp" style="color:#7dd3fc">0</div><div class="sc-label">Dispatchers</div></div>
+      </div>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Rechercher un utilisateur..." oninput="filterTable()">
+    </div>
+    <select class="filter-select" id="filterRole" onchange="filterTable()">
+      <option value="">Tous les rôles</option>
+      <option value="medecin">Médecin</option>
+      <option value="chirurgien">Chirurgien</option>
+      <option value="infirmier">Infirmier</option>
+      <option value="apprenti_chirurgien">Apprenti Chirurgien</option>
+      <option value="apprenti_medecin">Apprenti Médecin</option>
+      <option value="stagiaire">Stagiaire</option>
+    </select>
+    <select class="filter-select" id="filterPerm" onchange="filterTable()">
+      <option value="">Toutes permissions</option>
+      <option value="admin">Admin</option>
+      <option value="dispatcher">Dispatcher</option>
+      <option value="user">Utilisateur</option>
+    </select>
+    <select class="filter-select" id="filterPresence" onchange="filterTable()">
+      <option value="">Tous statuts</option>
+      <option value="online">En ligne</option>
+      <option value="offline">Hors ligne</option>
+    </select>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="table-wrapper">
+    <div class="table-header-bar">
+      <div class="table-title">👥 Gestion des Utilisateurs</div>
+      <div class="table-hint">Cliquez sur les en-têtes pour trier</div>
+    </div>
+    <div class="table-scroll">
+      <table id="usersTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable('id')" class="sorted">ID <span class="sort-arrow">▼</span></th>
+            <th onclick="sortTable('username')">Nom <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('role')">Rôle <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('permission')">Permission <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('presence')">Statut <span class="sort-arrow"></span></th>
+            <th onclick="sortTable('patrol')">Unité assignée <span class="sort-arrow"></span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr class="empty-row"><td colspan="7">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CRÉER / ÉDITER -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-user-title">Nouvel utilisateur</div>
+    <input type="hidden" id="edit-user-id">
+    <div class="modal-field">
+      <label>Nom d'utilisateur</label>
+      <input type="text" id="edit-username" placeholder="Prénom Nom" autocomplete="off">
+    </div>
+    <div class="modal-field">
+      <label>Rôle médical</label>
+      <select id="edit-role">
+        <option value="medecin">Médecin</option>
+        <option value="chirurgien">Chirurgien</option>
+        <option value="infirmier">Infirmier</option>
+        <option value="apprenti_chirurgien">Apprenti Chirurgien</option>
+        <option value="apprenti_medecin">Apprenti Médecin</option>
+        <option value="stagiaire">Stagiaire</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Permission système</label>
+      <select id="edit-permission">
+        <option value="user">Utilisateur</option>
+        <option value="dispatcher">Dispatcher</option>
+        <option value="admin">Administrateur</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Mot de passe</label>
+      <input type="password" id="edit-password" placeholder="••••••••" autocomplete="new-password">
+      <div class="password-hint" id="pw-hint">Laisser vide pour conserver le mot de passe actuel</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveUserModal()">💾 Sauvegarder</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-user')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUPPRESSION -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--red)">⚠ Supprimer l'utilisateur</div>
+    <div class="delete-confirm">
+      Vous êtes sur le point de supprimer <strong id="delete-name-label"></strong>.<br><br>
+      Cette action est <strong>irréversible</strong> et supprimera définitivement le compte.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" style="flex:1" onclick="confirmDelete()">🗑 Confirmer la suppression</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESET PRÉSENCES -->
+<div class="modal-overlay" id="modal-reset-presence">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--yellow)">⚡ Reset des Présences</div>
+    <div class="warn-confirm">
+      Mettre <strong>tous les utilisateurs hors ligne</strong> et vider leurs assignations d'unité ?<br><br>
+      Utile pour une remise à zéro de service.
+    </div>
+    <div class="modal-actions">
+      <button class="btn" style="flex:1;background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);" onclick="confirmResetPresence()">✓ Confirmer</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset-presence')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- BARRE OUTILS BAS DE PAGE -->
+<div class="bottom-toolbar">
+  <span class="tb-label">Outils Admin</span>
+  <div class="tb-sep"></div>
+  <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="loadUsers()">🔄 Rafraîchir</button>
+  <button class="btn btn-sm" style="background:rgba(245,158,11,0.1);color:#fcd34d;border:1px solid rgba(245,158,11,0.3)" onclick="openResetPresence()">⚡ Reset Présences</button>
+  <div style="margin-left:auto;font-size:11px;color:var(--muted);letter-spacing:1px">Connecté : <span style="color:var(--text);font-weight:600" id="adminName">—</span></div>
+</div>
+<div class="spacer-bottom"></div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const supabase = createClient(
+    'https://gktawbaposndfxijkxdk.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdGF3YmFwb3NuZGZ4aWpreGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzUyNDUsImV4cCI6MjA3OTY1MTI0NX0.tY-CHuyb2zr9s6hlGkwmrdTvg920VVNghI9S45CjwKk'
+  );
+
+  let currentUser = null;
+  let allUsers = [];
+  let sortField = 'id';
+  let sortAsc = true;
+  let pendingDeleteId = null;
+
+  const ROLE_LABELS = {
+    medecin:'Médecin', chirurgien:'Chirurgien', infirmier:'Infirmier',
+    apprenti_chirurgien:'Apprenti Chirurgien', apprenti_medecin:'Apprenti Médecin', stagiaire:'Stagiaire'
+  };
+
+  function updateClock() {
+    const n = new Date();
+    document.getElementById('clock').textContent =
+      String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    currentUser = JSON.parse(localStorage.getItem('chl_user'));
+    if (!currentUser) { window.location.href = 'login.html'; return; }
+    if (currentUser.permission !== 'admin') {
+      showToast('Accès refusé — réservé aux administrateurs.', 'error');
+      setTimeout(() => { window.location.href = 'dispatch.html'; }, 1800);
+      return;
+    }
+    document.getElementById('adminName').textContent = currentUser.username;
+    await loadUsers();
+    setInterval(loadUsers, 12000);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    });
+  });
+
+  async function loadUsers() {
+    const { data, error } = await supabase.from('chl_users').select('*').order('id');
+    if (error) { showToast('Erreur chargement : ' + error.message, 'error'); return; }
+    allUsers = data || [];
+    renderStats();
+    renderTable();
+  }
+  window.loadUsers = loadUsers;
+
+  function renderStats() {
+    document.getElementById('statTotal').textContent = allUsers.length;
+    document.getElementById('statOnline').textContent = allUsers.filter(u => u.presence).length;
+    document.getElementById('statAdmins').textContent = allUsers.filter(u => u.permission === 'admin').length;
+    document.getElementById('statDisp').textContent = allUsers.filter(u => u.permission === 'dispatcher').length;
+  }
+
+  window.filterTable = filterTable;
+  function filterTable() { renderTable(); }
+
+  function getSortedFiltered() {
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+    const fRole = document.getElementById('filterRole').value;
+    const fPerm = document.getElementById('filterPerm').value;
+    const fPres = document.getElementById('filterPresence').value;
+    let list = [...allUsers];
+    if (search) list = list.filter(u => (u.username||'').toLowerCase().includes(search) || String(u.id).includes(search));
+    if (fRole) list = list.filter(u => u.role === fRole);
+    if (fPerm) list = list.filter(u => u.permission === fPerm);
+    if (fPres === 'online') list = list.filter(u => u.presence);
+    if (fPres === 'offline') list = list.filter(u => !u.presence);
+    list.sort((a, b) => {
+      let av = a[sortField] ?? '', bv = b[sortField] ?? '';
+      if (typeof av === 'boolean') { av = av ? 1 : 0; bv = bv ? 1 : 0; }
+      const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv));
+      return sortAsc ? cmp : -cmp;
+    });
+    return list;
+  }
+
+  window.sortTable = function(field) {
+    if (sortField === field) sortAsc = !sortAsc; else { sortField = field; sortAsc = true; }
+    document.querySelectorAll('thead th').forEach(th => { th.classList.remove('sorted'); th.querySelector('.sort-arrow').textContent = ''; });
+    const fieldMap = { id:0, username:1, role:2, permission:3, presence:4, patrol:5 };
+    if (field in fieldMap) {
+      const ths = document.querySelectorAll('thead th');
+      ths[fieldMap[field]].classList.add('sorted');
+      ths[fieldMap[field]].querySelector('.sort-arrow').textContent = sortAsc ? '▼' : '▲';
+    }
+    renderTable();
+  };
+
+  function renderTable() {
+    const list = getSortedFiltered();
+    const tbody = document.getElementById('usersTableBody');
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Aucun utilisateur trouvé</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(u => buildRow(u)).join('');
+  }
+
+  function buildRow(u) {
+    const safeName = (u.username||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const permBadge = u.permission === 'admin'
+      ? `<span class="badge badge-admin">🛡 Admin</span>`
+      : u.permission === 'dispatcher'
+      ? `<span class="badge badge-dispatcher">📡 Dispatcher</span>`
+      : `<span class="badge badge-user">Utilisateur</span>`;
+    const presenceBadge = u.presence
+      ? `<span class="badge badge-online"><span class="online-dot on"></span>En ligne</span>`
+      : `<span class="badge badge-offline"><span class="online-dot off"></span>Hors ligne</span>`;
+    const patrolCell = u.patrol === 0
+      ? `<span class="patrol-badge">📡 Dispatch</span>`
+      : u.patrol
+      ? `<span class="patrol-badge">Unité ${u.patrol}</span>`
+      : `<span class="patrol-none">—</span>`;
+    const roleClass = 'role-color-' + (u.role || 'stagiaire');
+    const kickBtn = u.presence && u.id !== (currentUser&&currentUser.id)
+      ? `<button class="btn btn-sm" style="background:rgba(245,158,11,0.1);color:#fcd34d;border:1px solid rgba(245,158,11,0.3)" onclick="kickUser(${u.id},'${safeName}')">⚡</button>`
+      : '';
+    return `
+      <tr class="${u.presence ? 'row-online' : ''}" data-id="${u.id}">
+        <td class="id-cell">#${u.id}</td>
+        <td><strong>${u.username||'—'}</strong></td>
+        <td><span class="${roleClass}">${ROLE_LABELS[u.role]||u.role||'—'}</span></td>
+        <td>${permBadge}</td>
+        <td>${presenceBadge}</td>
+        <td>${patrolCell}</td>
+        <td>
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal(${u.id})">✏ Éditer</button>
+            ${u.id !== (currentUser&&currentUser.id)
+              ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal(${u.id},'${safeName}')">🗑</button>`
+              : '<span style="font-size:10px;color:var(--muted);letter-spacing:1px">Vous</span>'}
+            ${kickBtn}
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  // ── MODAL CRÉER ──
+  window.openCreateModal = function() {
+    document.getElementById('modal-user-title').textContent = '+ Nouvel utilisateur';
+    document.getElementById('edit-user-id').value = '';
+    document.getElementById('edit-username').value = '';
+    document.getElementById('edit-role').value = 'infirmier';
+    document.getElementById('edit-permission').value = 'user';
+    document.getElementById('edit-password').value = '';
+    document.getElementById('pw-hint').textContent = 'Obligatoire pour la création';
+    document.getElementById('modal-user').classList.add('active');
+    setTimeout(() => document.getElementById('edit-username').focus(), 60);
+  };
+
+  // ── MODAL ÉDITER ──
+  window.openEditModal = function(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    document.getElementById('modal-user-title').textContent = '✏ Modifier — ' + (u.username||'');
+    document.getElementById('edit-user-id').value = u.id;
+    document.getElementById('edit-username').value = u.username || '';
+    document.getElementById('edit-role').value = u.role || 'stagiaire';
+    document.getElementById('edit-permission').value = u.permission || 'user';
+    document.getElementById('edit-password').value = '';
+    document.getElementById('pw-hint').textContent = 'Laisser vide pour conserver le mot de passe actuel';
+    document.getElementById('modal-user').classList.add('active');
+    setTimeout(() => document.getElementById('edit-username').focus(), 60);
+  };
+
+  window.saveUserModal = async function() {
+    const id = document.getElementById('edit-user-id').value;
+    const username = document.getElementById('edit-username').value.trim();
+    const role = document.getElementById('edit-role').value;
+    const permission = document.getElementById('edit-permission').value;
+    const password = document.getElementById('edit-password').value;
+    if (!username) { showToast("Nom d'utilisateur requis", 'error'); return; }
+    const isNew = !id;
+    if (isNew && !password) { showToast('Mot de passe requis pour la création', 'error'); return; }
+    let payload = { username, role, permission };
+    if (password) payload.password = password;
+    if (isNew) {
+      payload.presence = false;
+      payload.patrol = null;
+      const { error } = await supabase.from('chl_users').insert([payload]);
+      if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+      showToast('✓ Utilisateur créé avec succès', 'success');
+    } else {
+      const { error } = await supabase.from('chl_users').update(payload).eq('id', parseInt(id));
+      if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+      showToast('✓ Utilisateur mis à jour', 'success');
+    }
+    closeModal('modal-user');
+    await loadUsers();
+  };
+
+  // ── SUPPRIMER ──
+  window.openDeleteModal = function(id, name) {
+    pendingDeleteId = id;
+    document.getElementById('delete-name-label').textContent = name + ' (#' + id + ')';
+    document.getElementById('modal-delete').classList.add('active');
+  };
+  window.confirmDelete = async function() {
+    if (!pendingDeleteId) return;
+    if (pendingDeleteId === currentUser.id) {
+      showToast('Impossible de supprimer votre propre compte !', 'error');
+      closeModal('modal-delete'); return;
+    }
+    const { error } = await supabase.from('chl_users').delete().eq('id', pendingDeleteId);
+    if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+    showToast('✓ Utilisateur supprimé', 'success');
+    pendingDeleteId = null;
+    closeModal('modal-delete');
+    await loadUsers();
+  };
+
+  // ── KICK ──
+  window.kickUser = async function(id, name) {
+    if (!confirm('Forcer ' + name + ' hors ligne et vider son assignation ?')) return;
+    const { error } = await supabase.from('chl_users').update({ presence: false, patrol: null }).eq('id', id);
+    if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+    showToast('⚡ ' + name + ' mis hors ligne', 'success');
+    await loadUsers();
+  };
+
+  // ── RESET PRÉSENCES ──
+  window.openResetPresence = function() { document.getElementById('modal-reset-presence').classList.add('active'); };
+  window.confirmResetPresence = async function() {
+    const { error } = await supabase.from('chl_users').update({ presence: false, patrol: null }).gte('id', 1);
+    if (error) { showToast('Erreur : ' + error.message, 'error'); return; }
+    showToast('✓ Toutes les présences réinitialisées', 'success');
+    closeModal('modal-reset-presence');
+    await loadUsers();
+  };
+
+  // ── NAVIGATION ──
+  window.goBack = function() { window.location.href = 'dispatch.html'; };
+  window.handleLogout = async function() {
+    await supabase.from('chl_users').update({ presence: false }).eq('id', currentUser.id);
+    localStorage.removeItem('chl_user');
+    window.location.href = 'index.html';
+  };
+  window.addEventListener('beforeunload', () => {
+    if (currentUser) navigator.sendBeacon(
+      'https://gktawbaposndfxijkxdk.supabase.co/rest/v1/chl_users?id=eq.' + currentUser.id,
+      JSON.stringify({ presence: false })
+    );
+  });
+
+  // ── MODAL CLOSE ──
+  window.closeModal = function(id) { document.getElementById(id).classList.remove('active'); };
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); });
+  });
+
+  // ── TOAST ──
+  function showToast(msg, type = 'info') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type === 'success' ? 'success' : type === 'error' ? 'error' : '');
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+    t.innerHTML = `<span>${icon}</span> ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.transition = 'opacity 0.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 350); }, 3200);
+  }
+  window.showToast = showToast;
+</script>
+</body>
+                                           </html>
